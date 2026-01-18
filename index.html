@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Adding and Subtracting Algebraic Fractions</title>
+
+  <style>
+    /* ============================================================
+      THEME TOKENS (SAFE TO EDIT)
+      ------------------------------------------------------------
+      Purpose:
+      - Central place to control colors, shadows, corner radii.
+      - These are "design knobs" only — changing them will not
+        affect slide logic or layout rules, just the look.
+
+      Safe to change:
+      - Any --var values below (colors, shadows, radii).
+
+      Avoid changing:
+      - Class names used later in HTML/JS. Those are "contracts".
+    ============================================================ */
+    :root {
+      --top-bar-bg: #34495e;
+      --bottom-bar-bg: #2c3e50;
+      --page-bg: #f7f4e9;
+
+      --card-bg: #ffffff;
+      --card-border: #1f7ed0;
+
+      --text-main: #1f2933;
+      --text-muted: #ecf0f1;
+
+      --pill-blue: #3498db;
+      --pill-green: #27ae60;
+      --pill-red: #e74c3c;
+      --pill-purple: #8e44ad;
+      --pill-yellow: #f1c40f;
+
+      --toolbar-icon-bg: #f1c40f;
+      --toolbar-icon-border: #e0a708;
+
+      --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.12);
+      --radius-card: 18px;
+      --radius-pill: 999px;
+    }
+
+    /* ============================================================
+      GLOBAL RESET (DO NOT CHANGE BEHAVIOR)
+      ------------------------------------------------------------
+      Purpose:
+      - Standardize box sizing and remove default margins/padding.
+      - Keeps layout consistent across browsers.
+
+      Avoid changing:
+      - This is a foundation; altering it can produce "mystery"
+        spacing differences across devices.
+    ============================================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ============================================================
+      PAGE LAYOUT SHELL (SAFE TO STYLE)
+      ------------------------------------------------------------
+      Purpose:
+      - A vertical app: top bar, slide content, bottom toolbar.
+
+      Safe to change:
+      - Fonts, background color, base text color.
+
+      Avoid changing:
+      - The flex column structure. The slide system assumes that
+        `.content` expands to fill available space.
+    ============================================================ */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--page-bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ============================================================
+      TOP BAR (UI CHROME)
+      ------------------------------------------------------------
+      Purpose:
+      - Shows metadata (date/title) and navigation (slide #, dropdown).
+
+      Safe to change:
+      - Colors, padding, font sizes.
+
+      Avoid changing:
+      - Element ids used by JS: #pageInfo, #slideSelect.
+    ============================================================ */
+    .top-bar {
+      background: var(--top-bar-bg);
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      font-size: 14px;
+    }
+    .top-left { display: flex; flex-direction: column; gap: 6px; }
+    .meta-row { display: flex; align-items: baseline; gap: 6px; }
+    .meta-label { font-weight: 600; opacity: 0.9; }
+    .meta-value {
+      border-bottom: 2px solid rgba(236, 240, 241, 0.7);
+      padding-bottom: 2px;
+      font-weight: 500;
+    }
+    .top-right { display: flex; align-items: center; gap: 18px; font-weight: 500; }
+    .page-info { white-space: nowrap; }
+
+    .slide-select-wrapper { position: relative; }
+    .slide-select {
+      padding: 6px 28px 6px 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      outline: none;
+      background: #ffffff;
+      color: #333;
+      appearance: none;
+    }
+    .slide-select-wrapper::after {
+      content: "▾";
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      pointer-events: none;
+      color: #555;
+    }
+
+    /* ============================================================
+      MAIN CONTENT AREA (SLIDE STAGE)
+      ------------------------------------------------------------
+      Purpose:
+      - This is the "stage" where slides render.
+      - Timer and drawing canvas are positioned relative to this area.
+
+      Safe to change:
+      - Padding and spacing.
+
+      Avoid changing:
+      - `position: relative;` is required for:
+          - the draggable timer (absolute positioned)
+          - the drawing canvas overlay
+    ============================================================ */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 40px 24px 40px;
+      gap: 18px;
+      position: relative;
+    }
+
+    /* ============================================================
+      CARD COMPONENT (CORE KNOWLEDGE + EXAMPLE INTRO BOXES)
+      ------------------------------------------------------------
+      Purpose:
+      - Reusable rounded boxes that look like "slides".
+      - Used for core knowledge explanations and for example headers.
+
+      Safe to change:
+      - Borders/shadows/padding.
+
+      Avoid changing:
+      - Max width assumptions (the question layouts are aligned to ~900px).
+    ============================================================ */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      border: 3px solid var(--card-border);
+      box-shadow: var(--shadow-soft);
+      max-width: 900px;
+      width: 100%;
+      padding: 26px 34px 30px;
+    }
+
+    .card h1 {
+      font-size: 30px;
+      margin-bottom: 12px;
+      font-weight: 800;
+      color: #2c3e50;
+    }
+
+    .card p { font-size: 18px; line-height: 1.6; }
+
+    /* "Example" cards use slightly smaller text to fit more comfortably. */
+    .example-card p { font-size: 16px; line-height: 1.55; }
+
+    .bullets {
+      margin-top: 8px;
+      padding-left: 18px;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+    .bullets li { margin: 6px 0; }
+
+    /* ============================================================
+      MATH TYPOGRAPHY (VISUAL, NOT LOGIC)
+      ------------------------------------------------------------
+      Purpose:
+      - Gives a large, textbook-like math appearance.
+      - MathJax renders LaTeX into HTML, but this controls sizing.
+
+      Safe to change:
+      - Font size, line height.
+
+      Avoid changing:
+      - The `.math` class is used widely in slide templates.
+    ============================================================ */
+    .math { font-size: 52px; line-height: 1.25; }
+    .math i { font-style: italic; }
+    .math sup { font-size: 60%; vertical-align: super; }
+
+    .equation-line {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin: 22px 0;
+    }
+
+    /* ============================================================
+      QUESTION LABELS ("a)", "b)", etc.)
+      ------------------------------------------------------------
+      Purpose:
+      - Aligns question labels cleanly in all question layouts.
+      - Shared between row layout and grid layout.
+
+      Avoid changing:
+      - Width is intentional so labels align vertically across items.
+    ============================================================ */
+    .q-label {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: #2c3e50;
+      width: 44px;
+      text-align: right;
+      flex: 0 0 auto;
+    }
+
+    /* ============================================================
+      SLIDE TYPE: MINI-WHITEBOARD + CHALLENGE (2×2 GRID)
+      ------------------------------------------------------------
+      CONTRACT (IMPORTANT):
+      - These slides always show a 2×2 grid of questions.
+      - These slides also show a timer (controlled in JS per slide via `timer:`).
+      - Layout class: `.questions-grid` + `.q-block`.
+
+      If you add a NEW mini-whiteboard/challenge slide:
+      - Use `timer: { min, sec }`
+      - Use `renderMiniWhiteboard([...4 items...])`
+
+      Avoid changing:
+      - grid template and gaps if you want consistent board spacing.
+    ============================================================ */
+    .questions-grid {
+      max-width: 900px;
+      width: 100%;
+      padding: 0 34px;
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 120px;
+      row-gap: 160px;
+      justify-items: start;
+    }
+
+    .q-block {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 52px;
+      line-height: 1.25;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    /* ============================================================
+      SLIDE TYPE: EXAMPLE SLIDES (ROW LAYOUT)
+      ------------------------------------------------------------
+      CONTRACT (IMPORTANT):
+      - Example slides have their example lines aligned in a single column,
+        with consistent vertical spacing.
+      - If an answer is present, it must appear UNDER the question (not right).
+        (In this project, answers are embedded in `mainHtml` as extra HTML.)
+      - Layout class: `.questions-rows` and `.q-row`.
+
+      If you add a NEW example slide:
+      - Use `timer: null`
+      - Use `renderRowQuestions([...], {forceCount: 2 or 4 })`
+
+      Notes:
+      - `forceCount` is used to force consistent spacing (e.g., 4 rows even if
+        one is a placeholder).
+    ============================================================ */
+    .questions-rows {
+      max-width: 900px;
+      width: 100%;
+      padding: 0 34px;
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 70px;
+    }
+
+    .q-row {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    /* ============================================================
+    SLIDE TYPE: CORE KNOWLEDGE + EXAMPLE SLIDES (COLUMN LAYOUT)
+    ------------------------------------------------------------
+    Purpose:
+    - Same content as row layout, but displayed in columns.
+    ============================================================ */
+    .questions-cols {
+    max-width: 900px;
+    width: 100%;
+    padding: 0 34px;
+    margin-top: 14px;
+    display: grid;
+    column-gap: 120px;
+    row-gap: 70px;
+    justify-items: start;
+    }
+
+    .q-col {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    }
+
+.q-col.placeholder { opacity: 0; pointer-events: none; }
+
+
+    .q-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .q-main {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 52px;
+      line-height: 1.25;
+    }
+
+    .q-sub {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 34px;
+      line-height: 1.25;
+    }
+
+    /* Placeholders keep spacing consistent while visually invisible. */
+    .q-row.placeholder { opacity: 0; pointer-events: none; }
+
+    /* ============================================================
+      FINAL REVIEW SLIDE (SPECIAL LAYOUT)
+      ------------------------------------------------------------
+      Purpose:
+      - A recap with a distinct style: orange title, blue boxes, green task.
+
+      Avoid changing:
+      - Class names are relied on by the slide's HTML structure.
+    ============================================================ */
+    .review-slide {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin-top: 6px;
+    }
+
+    .review-title {
+      border: 3px solid #f59e0b;
+      background: #fff7ed;
+      color: #c2410c;
+      font-size: 26px;
+      font-weight: 900;
+      padding: 14px 18px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-soft);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .review-box {
+      border: 3px solid #3b82f6;
+      background: #ffffff;
+      padding: 16px 18px;
+      border-radius: 12px;
+      font-size: 18px;
+      line-height: 1.5;
+      box-shadow: var(--shadow-soft);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .review-box strong { font-weight: 900; }
+
+    /* Examples in recap boxes are centered and use serif math styling. */
+    .review-example {
+      margin-top: 8px;
+      text-align: center;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .apply-task {
+      border: 3px solid #16a34a;
+      background: #ecfdf5;
+      padding: 20px 18px;
+      border-radius: 14px;
+      box-shadow: var(--shadow-soft);
+      width: 100%;
+      max-width: 900px;
+      text-align: center;
+    }
+    .apply-task h2 {
+      color: #166534;
+      font-size: 32px;
+      margin-bottom: 8px;
+      font-weight: 900;
+    }
+    .apply-task p {
+      font-size: 20px;
+      color: #14532d;
+      font-weight: 700;
+    }
+
+    /* ============================================================
+      TIMER WIDGET (USED ON MINI-WHITEBOARD + CHALLENGE SLIDES)
+      ------------------------------------------------------------
+      CONTRACT (IMPORTANT):
+      - Timer visibility is controlled by slide config: `slides[i].timer`.
+      - Timer must be positioned absolutely inside `.content`.
+      - Timer is draggable and its last position is stored in localStorage.
+
+      Safe to change:
+      - Styling only (colors, padding, border).
+
+      Avoid changing:
+      - `position: absolute;` and the element id `#timerWidget`.
+      - Drag code assumes `.content` is the bounding box.
+    ============================================================ */
+    .timer-widget {
+      position: absolute;
+      left: 24px;
+      top: 110px;
+      width: 260px;
+      background: #111;
+      color: #fff;
+      border-radius: 14px;
+      padding: 18px 16px 16px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.18);
+      border: 3px solid #0ea5e9;
+      user-select: none;
+      z-index: 5;
+      cursor: grab;
+    }
+    .timer-widget:active { cursor: grabbing; }
+
+    .timer-display {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 48px;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .timer-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    .timer-btn {
+      background: #2d9cdb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .timer-btn:active { transform: translateY(1px); }
+    .timer-inputs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+    .timer-inputs label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+    .timer-inputs input {
+      width: 56px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.25);
+      outline: none;
+      font-weight: 800;
+      text-align: center;
+      background: #fff;
+      color: #111;
+    }
+
+    /* ============================================================
+      DRAWING CANVAS OVERLAY (WHITEBOARD INK)
+      ------------------------------------------------------------
+      CONTRACT (IMPORTANT):
+      - Canvas overlays the entire `.content` area.
+      - Pointer events are enabled/disabled in JS when drawing is toggled.
+      - Drawings are saved per slide via dataURLs.
+
+      Avoid changing:
+      - `position`, `top/left`, and 100% sizing.
+      - `pointer-events: none;` is intentional; JS flips it to `auto`.
+    ============================================================ */
+    #drawCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Used to toggle visibility from JS. */
+    .hidden { display: none; }
+
+    /* ============================================================
+      BOTTOM TOOLBAR (NAV + DRAWING CONTROLS)
+      ------------------------------------------------------------
+      Purpose:
+      - Navigation buttons and drawing controls.
+
+      Avoid changing:
+      - Element ids used by JS: prev/next buttons, pen/eraser buttons, etc.
+    ============================================================ */
+    .toolbar {
+      background: var(--bottom-bar-bg);
+      color: var(--text-muted);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tool-button, .pill-button {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+    .tool-button {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #1f4b6f;
+      color: #ecf0f1;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+    .tool-button.square-active {
+      width: 40px;
+      border-radius: 12px;
+      background: var(--toolbar-icon-bg);
+      color: #2c3e50;
+      border: 2px solid var(--toolbar-icon-border);
+      font-size: 18px;
+    }
+    .tool-button.circle { border-radius: 50%; }
+    .tool-button.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+    .tool-button.active { box-shadow: 0 0 0 2px #f1c40f, 0 2px 6px rgba(0,0,0,0.35); }
+
+    .pill-button {
+      padding: 7px 14px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+    .pill-blue { background: var(--pill-blue); color: #ecf0f1; }
+    .pill-red { background: var(--pill-red); color: #ffffff; }
+    .pill-purple { background: var(--pill-purple); color: #ecf0f1; }
+    .pill-green { background: var(--pill-green); color: #ecf0f1; }
+    .toolbar-spacer { flex: 1; }
+
+    /* Utility class: wraps long inline answers to avoid overflow. */
+    .wrap-ans{
+      display: inline-block;
+      max-width: 540px;
+      vertical-align: top;
+      }
+
+    /* ============================================================
+      RESPONSIVE BEHAVIOR (MOBILE/TABLET)
+      ------------------------------------------------------------
+      Purpose:
+      - Timer becomes "static" instead of draggable on small screens.
+      - Mini-whiteboard grid becomes a single column.
+      - Font sizes scale down.
+
+      Avoid changing:
+      - The timer becomes `position: static;` intentionally so it doesn't
+        overlap content on small devices.
+    ============================================================ */
+    @media (max-width: 900px) {
+      .timer-widget {
+        position: static;
+        width: 100%;
+        max-width: 360px;
+        margin-bottom: 14px;
+        cursor: default;
+      }
+      .questions-grid {
+        grid-template-columns: 1fr;
+        row-gap: 70px;
+        column-gap: 0;
+      }
+      .math, .q-block { font-size: 42px; }
+      .q-main { font-size: 42px; }
+      .q-sub { font-size: 30px; }
+    }
+
+/* Slide-specific hack: slide 16 zoom & spacing adjustment. */
+.slide16-zoom {
+  transform: scale(1);
+  transform-origin: top center;
+  width: 125%;
+  margin-bottom: -240px;
+}
+
+/* Slide 7: zoom OUT slightly (keeps content centered) */
+.slide7-zoom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 18px;
+  transform: scale(0.9);
+  transform-origin: top center;
+  margin-bottom: -240px;
+}
+
+
+  </style>
+
+  <!-- ============================================================
+    MATHJAX (LATEX RENDERER)
+    ------------------------------------------------------------
+    Purpose:
+    - Enables LaTeX strings like \( ... \) inside slide HTML.
+
+    Template note:
+    - Keep this if your slides use LaTeX.
+    - If you remove MathJax, you must also remove LaTeX markup.
+  ============================================================ -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+  <header class="top-bar">
+    <div class="top-left">
+      <div class="meta-row">
+        <span class="meta-label">Date:</span>
+        <span class="meta-value">08/01/2026</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Title:</span>
+        <span class="meta-value">Changing the Subject of an Equation</span>
+      </div>
+    </div>
+
+    <div class="top-right">
+      <span class="page-info" id="pageInfo">Slide 1 of 15</span>
+      <div class="slide-select-wrapper">
+        <select class="slide-select" id="slideSelect"></select>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <!-- Timer is globally present, but only shown for slides with `timer:` -->
+    <div id="timerWidget" class="timer-widget hidden">
+      <div id="timerDisplay" class="timer-display">01:00</div>
+      <div class="timer-controls">
+        <button id="timerStart" class="timer-btn">Start</button>
+        <button id="timerPause" class="timer-btn">Pause</button>
+        <button id="timerReset" class="timer-btn">Reset</button>
+      </div>
+      <div class="timer-inputs">
+        <label>Min: <input id="timerMin" type="number" min="0" max="999" value="1"></label>
+        <label>Sec: <input id="timerSec" type="number" min="0" max="59" value="0"></label>
+      </div>
+    </div>
+
+    <!-- Slide HTML is injected here by JS (renderSlide()). -->
+    <div id="slideMount" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:18px;"></div>
+
+    <!-- Drawing overlay: used for live annotation during teaching. -->
+    <canvas id="drawCanvas"></canvas>
+  </main>
+
+  <footer class="toolbar">
+    <div class="toolbar-left">
+      <button id="fullscreenBtn" class="tool-button square-active">⤢</button>
+      <button id="prevBtn" class="tool-button disabled">←</button>
+      <button id="nextBtn" class="tool-button">→</button>
+
+      <button id="penBtn" class="tool-button circle">✏️</button>
+      <button id="greenBtn" class="tool-button circle">🟢</button>
+      <button id="redBtn" class="tool-button circle">🔴</button>
+      <button id="eraserBtn" class="tool-button circle">⚪</button>
+
+      <button id="penSizeBtn" class="pill-button pill-blue">Pen size: Medium ▾</button>
+      <button id="eraserSizeBtn" class="pill-button pill-blue">Eraser size: Medium ▾</button>
+      <button id="clearBtn" class="pill-button pill-red">Clear</button>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <div class="toolbar-right">
+      <!-- These are currently "visual only" (no JS wires) -->
+      <button class="pill-button pill-purple">Animations: On</button>
+      <button class="pill-button pill-purple">Timers: On</button>
+      <button class="pill-button pill-green"><span class="icon">🖨</span>Print</button>
+    </div>
+  </footer>
+
+  <script>
+    /* ============================================================
+      DOM HOOKS (DO NOT RENAME IDS WITHOUT UPDATING JS)
+      ------------------------------------------------------------
+      Purpose:
+      - Cache commonly-used DOM nodes for fast access.
+      - These ids/classes are the "contract" between HTML and JS.
+    ============================================================ */
+    const slideMount = document.getElementById('slideMount');
+    const slideSelect = document.getElementById('slideSelect');
+    const pageInfo = document.getElementById('pageInfo');
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    const timerWidget = document.getElementById('timerWidget');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerStartBtn = document.getElementById('timerStart');
+    const timerPauseBtn = document.getElementById('timerPause');
+    const timerResetBtn = document.getElementById('timerReset');
+    const timerMinInput = document.getElementById('timerMin');
+    const timerSecInput = document.getElementById('timerSec');
+
+    /* ============================================================
+      SLIDE TYPE LAYOUT HELPERS (TEMPLATE CORE)
+      ------------------------------------------------------------
+      This project intentionally supports multiple "slide types":
+
+      1) CORE KNOWLEDGE SLIDES
+         - Textbook-style explanation (uses `.card` blocks)
+         - No timer
+         - Often followed by an "Example" intro box
+
+      2) EXAMPLE SLIDES
+         - Teacher-led live walkthrough
+         - Questions are aligned in a single vertical column ("rows")
+         - Uses renderRowQuestions()
+         - No timer
+
+      3) MINI-WHITEBOARD SLIDES
+         - Student activity (timed)
+         - Always uses a 2×2 grid of questions
+         - Uses renderMiniWhiteboard()
+         - Timer must be enabled via slide.timer
+
+      4) CHALLENGE SLIDES
+         - Same layout contract as MINI-WHITEBOARD (timer + 2×2)
+         - Typically harder/unseen questions
+
+      IMPORTANT:
+      - The slide type is defined by WHICH helper you use in `render: () => ...`
+        and whether you set `timer: null` or `timer: {min, sec}`.
+    ============================================================ */
+
+    /**
+     * EXAMPLE SLIDES / NON-WHITEBOARD QUESTION LAYOUT (ROWS)
+     *
+     * items:
+     *   [{ label:"a)", mainHtml:"...", subs?: ["...", "..."], placeholder?:true }]
+     *
+     * opts.forceCount:
+     *   - Forces a fixed number of rows (2 or 4) for consistent vertical spacing.
+     *   - If you have fewer items, invisible placeholders are added.
+     *
+     * Template rules:
+     * - Use this for "examples" where you want questions lined up in a row/column.
+     * - Answers (if present) should be embedded in mainHtml and will appear under/inline.
+     * - This helper does NOT show a timer.
+     */
+    function renderRowQuestions(items, opts = { forceCount: null }) {
+      const rows = [...items];
+
+      if (typeof opts.forceCount === "number") {
+        while (rows.length < opts.forceCount) rows.push({ label: "", mainHtml: "", subs: [], placeholder: true });
+        if (rows.length > opts.forceCount) rows.length = opts.forceCount;
+      }
+
+      return `
+        <section class="questions-rows">
+          ${rows.map(r => `
+            <div class="q-row ${r.placeholder ? "placeholder" : ""}">
+              <span class="q-label">${r.label || ""}</span>
+              <div class="q-content">
+                <div class="q-main"><span class="math">${r.mainHtml || ""}</span></div>
+                ${(r.subs || []).map(s => `
+                  <div class="q-sub"><span class="math" style="font-size:34px;">${s}</span></div>
+                `).join("")}
+              </div>
+            </div>
+          `).join("")}
+        </section>
+      `;
+    }
+
+    /**
+     * CORE KNOWLEDGE + EXAMPLE QUESTION LAYOUT (COLUMNS)
+     *
+     * Same input format as renderRowQuestions, but displayed as a grid of columns.
+     * Default: 2 columns (or 1 column if only 1 item).
+     */
+    function renderColumnQuestions(items, opts = { forceCount: null, columns: 2 }) {
+    const rows = [...items];
+
+    if (typeof opts.forceCount === "number") {
+        while (rows.length < opts.forceCount) rows.push({ label: "", mainHtml: "", subs: [], placeholder: true });
+        if (rows.length > opts.forceCount) rows.length = opts.forceCount;
+    }
+
+    const colCount = Math.min(opts.columns || 2, Math.max(1, rows.length));
+
+    return `
+        <section class="questions-cols" style="grid-template-columns: repeat(${colCount}, 1fr);">
+        ${rows.map(r => `
+            <div class="q-col ${r.placeholder ? "placeholder" : ""}">
+            <span class="q-label">${r.label || ""}</span>
+            <div class="q-content">
+                <div class="q-main"><span class="math">${r.mainHtml || ""}</span></div>
+                ${(r.subs || []).map(s => `
+                <div class="q-sub"><span class="math" style="font-size:34px;">${s}</span></div>
+                `).join("")}
+            </div>
+            </div>
+        `).join("")}
+        </section>
+    `;
+    }
+
+    /**
+     * MINI-WHITEBOARD / CHALLENGE QUESTION LAYOUT (2×2 GRID)
+     *
+     * items:
+     *   [{ label:"a)", exprHtml:"..." }, ...]
+     *
+     * Template rules:
+     * - Always takes the first 4 items and shows them in a 2×2 grid.
+     * - Use this ONLY for:
+     *     - mini-whiteboard slides
+     *     - challenge slides
+     * - Pair with slide.timer to show the timer widget.
+     */
+    function renderMiniWhiteboard(items) {
+      const first4 = items.slice(0, 4);
+      return `
+        <section class="questions-grid">
+          ${first4.map(r => `
+            <div class="q-block">
+              <span class="q-label">${r.label}</span>
+              <span class="math">${r.exprHtml}</span>
+            </div>
+          `).join("")}
+        </section>
+      `;
+    }
+
+    /* ============================================================
+      SLIDE DECK DATA (EDIT HERE TO BUILD NEW LESSONS)
+      ------------------------------------------------------------
+      Each slide object:
+        {
+          timer: null | { min: number, sec: number },
+          render: () => string  // returns HTML string
+        }
+
+      To add slides:
+      - Append a new object to the `slides` array.
+      - If you add/remove slides, the dropdown and maxSlide update automatically.
+
+      Slide-type recipes:
+      - CORE KNOWLEDGE:
+          timer: null
+          render: () => `<section class="card">...</section>` (and optional example card)
+
+      - EXAMPLE SLIDE:
+          timer: null
+          render: () => `... ${renderRowQuestions([...], {forceCount: 2 or 4 })}`
+
+      - MINI-WHITEBOARD:
+          timer: { min: 1, sec: 0 }  // or whatever
+          render: () => `... ${renderMiniWhiteboard([...4...])}`
+
+      - CHALLENGE:
+          Same as MINI-WHITEBOARD but with different wording/questions.
+
+      IMPORTANT:
+      - The timer widget is global; it is only shown when slide.timer is set.
+      - Per-slide drawings are saved based on the slide index.
+    ============================================================ */
+    const slides = [
+      {
+        timer: null,
+        render: () => `
+          <section class="card">
+            <h1>Core Knowledge: Changing the Subject</h1>
+            <ul class="bullets">
+              <li>To change the subject of an equation, the required variable must be isolated.</li>
+              <li>Use the inverse (opposite) operation to eliminate terms.</li>
+              <li>Any operation applied to one side of an equation must also be applied to the other side.</li>
+            </ul>
+          </section>
+
+          <section class="card example-card">
+            <h1>Example</h1>
+            <p>Make \\(a\\) the subject.</p>
+          </section>
+
+          ${renderColumnQuestions(
+            [
+              {
+                label: "a)",
+                mainHtml: `
+                    \\(
+                    \\begin{aligned}[t]
+                    a+2 &= b \\\\
+                    \\phantom{a+}\\color{#1f7ed0}{-2} &\\phantom{=} \\color{#1f7ed0}{-2} \\\\
+                    \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{b-2}
+                    \\end{aligned}
+                    \\)
+                `
+              },
+              {
+                label: "b)",
+                mainHtml: `
+                \\(
+                \\begin{aligned}[t]
+                a+5 &\\;=\\; b+7 \\\\
+                \\phantom{a+}\\color{#1f7ed0}{-5} &\\phantom{\\;=\\;}\\phantom{b+}\\color{#1f7ed0}{-5} \\\\
+                \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{b+2}
+                \\end{aligned}
+                \\)
+                `
+              }
+            ],
+            { forceCount: 2, columns: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: null,
+        render: () => `
+          <section class="card example-card">
+            <h1>Examples</h1>
+            <p>Make a the subject.</p>
+          </section>
+
+          ${renderColumnQuestions(
+            [
+              { label: "a)", mainHtml: `\\(a+3=d\\)` },
+              { label: "b)", mainHtml: `\\(a+4=x-2\\)` },
+            ],
+            { forceCount: 2, columns: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: { min: 1, sec: 0 },
+        render: () => `
+          <section class="card example-card">
+            <h1>Question 1</h1>
+            <p><strong>On your whiteboards, make \\(a\\) the subject.</strong></p>
+          </section>
+
+          ${renderMiniWhiteboard([
+            { label: "a)", exprHtml: `\\(a+5=y\\)` },
+            { label: "b)", exprHtml: `\\(a+1=b+4\\)` },
+            { label: "c)", exprHtml: `\\(a+6=x-3\\)` },
+            { label: "d)", exprHtml: `\\(a+9=p+2\\)` }
+          ])}
+        `
+      },
+
+      {
+        timer: null,
+        render: () => `
+          <section class="card">
+            <h1>Core Knowledge: Subtraction</h1>
+            <ul class="bullets">
+              <li>When an equation contains subtraction, use the inverse operation (addition).</li>
+              <li>Add the same value to both sides of the equation.</li>
+              <li>The aim is to isolate the required variable.</li>
+            </ul>
+          </section>
+
+          <section class="card example-card">
+            <h1>Example</h1>
+            <p>Make \\(a\\) the subject.</p>
+          </section>
+
+          ${renderColumnQuestions(
+            [
+              {
+                label: "a)",
+                mainHtml: `
+                  \\(
+                  \\begin{aligned}[t]
+                    a-4 &= b \\\\
+                    \\phantom{a}\\color{#1f7ed0}{+4}\\ &\\phantom{=}\\color{#1f7ed0}{+4} \\\\
+                    \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{b+4}
+                  \\end{aligned}
+                  \\)
+                `
+              },
+              {
+                label: "b)",
+                mainHtml: `
+                \\(
+                \\begin{aligned}[t]
+                a-7 &\\;=\\; b-1 \\\\
+                \\phantom{a+}\\color{#1f7ed0}{+7} &\\phantom{\\;=\\;}\\phantom{b-}\\color{#1f7ed0}{+7} \\\\
+                \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{b+6}
+                \\end{aligned}
+                \\)
+                `
+              }
+            ],
+            { forceCount: 2, columns: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: null,
+        render: () => `
+          <section class="card example-card">
+            <h1>Examples</h1>
+            <p>Make a the subject.</p>
+          </section>
+
+          ${renderColumnQuestions(
+            [
+              { label: "a)", mainHtml: `\\(a-3=b\\)` },
+              { label: "b)", mainHtml: `\\(a-5=c+2\\)` },
+              { label: "", mainHtml: "", placeholder: true }
+            ],
+            { forceCount: 4, columns: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: { min: 1, sec: 0 },
+        render: () => `
+          <section class="card example-card">
+            <h1>Question 2</h1>
+            <p><strong>On your whiteboards, make \\(a\\) the subject.</strong></p>
+          </section>
+
+          ${renderMiniWhiteboard([
+            { label: "a)", exprHtml: `\\(a-6=y\\)` },
+            { label: "b)", exprHtml: `\\(a-2=b+5\\)` },
+            { label: "c)", exprHtml: `\\(a-9=x-4\\)` },
+            { label: "d)", exprHtml: `\\(a-1=p+7\\)` }
+          ])}
+        `
+      },
+
+      {
+        timer: null,
+        render: () => `
+          <section class="card">
+            <h1>Core Knowledge: Multiplication</h1>
+            <ul class="bullets">
+              <li>When a variable is multiplied by a number, use the inverse operation (division).</li>
+              <li>Divide both sides of the equation by the same non-zero number.</li>
+              <li>The goal is to isolate the variable.</li>
+            </ul>
+          </section>
+
+          <section class="card example-card">
+            <h1>Example</h1>
+            <p>Make \\(a\\) the subject.</p>
+          </section>
+
+          ${renderColumnQuestions(
+            [
+              {
+                label: "a)",
+                mainHtml: `
+                \\(
+                \\begin{aligned}[t]
+                \\color{#1f7ed0}{\\frac{\\color{black}{3a}}{3}} &\\;=\\; \\color{#1f7ed0}{\\frac{\\color{black}{b}}{3}} \\\\
+                \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{\\frac{{b}}{3}}
+                \\end{aligned}
+                \\)
+                `
+              },
+              { label: "b",
+               mainHtml: `
+                \\(
+                \\begin{aligned}[t]
+                \\color{#1f7ed0}{\\frac{\\color{black}{7a}}{7}} &\\;=\\; \\color{#1f7ed0}{\\frac{\\color{black}{x-2}}{7}} \\\\
+                \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{\\frac{{x-2}}{7}}
+                \\end{aligned}
+                \\)
+                `
+                }
+            ],
+            { forceCount: 2, columns: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: null,
+        render: () => `
+          <section class="card example-card">
+            <h1>Examples</h1>
+            <p>Make the stated variable the subject.</p>
+          </section>
+
+          ${renderColumnQuestions(
+            [
+              { label: "a)", mainHtml: `\\(5a=c\\)` },
+              { label: "b)", mainHtml: `\\(4a=b+8\\)` },
+              { label: "", mainHtml: "", placeholder: true }
+            ],
+            { forceCount: 4, columns: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: { min: 1, sec: 0 },
+        render: () => `
+          <section class="card example-card">
+            <h1>Question 3</h1>
+            <p><strong>On your whiteboards, make \\(a\\) the subject.</strong></p>
+          </section>
+
+          ${renderMiniWhiteboard([
+            { label: "a)", exprHtml: `\\(2a=y\\)` },
+            { label: "b)", exprHtml: `\\(6a=b+12\\)` },
+            { label: "c)", exprHtml: `\\(9a=x\\)` },
+            { label: "d)", exprHtml: `\\(4a=p+20\\)` }
+          ])}
+        `
+      },
+
+      {
+        timer: null,
+        render: () => `
+          <section class="card">
+            <h1>Core Knowledge: Division</h1>
+            <ul class="bullets">
+              <li>When a variable is divided by a number, use the inverse operation (multiplication).</li>
+              <li>Multiply both sides of the equation by the same number.</li>
+              <li>Ensure the variable is fully isolated.</li>
+            </ul>
+          </section>
+
+          <section class="card example-card">
+            <h1>Example</h1>
+            <p>Make \\(a\\) the subject.</p>
+          </section>
+
+          ${renderColumnQuestions(
+            [
+              {
+                label: "a)",
+                mainHtml: `
+                \\(
+                \\begin{aligned}[t]
+                \\frac{a}{5} &\\;=\\; b \\\\
+                \\phantom{a\\div}\\color{#1f7ed0}{\\times 5} &\\phantom{\\;=\\;} \\color{#1f7ed0}{\\times 5} \\\\
+                \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{5b}
+                \\end{aligned}
+                \\)
+                `
+              },
+                { label: "b)", 
+                mainHtml: `
+                \\(
+                \\begin{aligned}[t]
+                \\frac{a}{3}&\\;=\\;x-5\\\\
+                \\phantom{a\\div}\\color{#1f7ed0}{\\times 3} &\\phantom{\\;=\\;} \\color{#1f7ed0}{\\times 3} \\\\
+                \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{3(x-5)}\\\\
+                \\color{#1f7ed0}{a} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{3x-15}\\\\
+                \\end{aligned}
+                \\)
+                `
+             },
+            ],
+            { forceCount: 2, columns: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: null,
+        render: () => `
+          <section class="card example-card">
+            <h1>Examples</h1>
+            <p>Make the stated variable the subject.</p>
+          </section>
+
+          ${renderColumnQuestions(
+            [
+                { label: "a)", mainHtml: `\\(\\frac{a}{4}=c\\)` },
+                { label: "b)", mainHtml: `\\(\\frac{a}{6}=b+1\\)` },
+            ],
+            { forceCount: 4, columns: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: { min: 1, sec: 0 },
+        render: () => `
+          <section class="card example-card">
+            <h1>Question 4</h1>
+            <p><strong>On your whiteboards, make \\(a\\) the subject.</strong></p>
+          </section>
+
+          ${renderMiniWhiteboard([
+            { label: "a)", exprHtml: `\\(\\frac{a}{2}=y\\)` },
+            { label: "b)", exprHtml: `\\(\\frac{a}{5}=b+3\\)` },
+            { label: "c)", exprHtml: `\\(\\frac{a}{8}=x\\)` },
+            { label: "d)", exprHtml: `\\(\\frac{a}{10}=p+4\\)` },
+          ])}
+        `
+      },
+
+        {
+        timer: null,
+        render: () => `
+            <section class="card">
+            <h1>Core Knowledge: Changing the Subject</h1>
+            <p>
+                When changing the subject of an equation, undo the operations in reverse order.
+                Start with the operation furthest away from the variable and treat anything in
+                brackets or a fraction as one whole expression. Work step by step until the
+                variable is on its own.
+            </p>
+            </section>
+
+            <section class="card example-card">
+            <h1>Example</h1>
+            <p>Make \\(x\\) the subject.</p>
+            </section>
+
+            ${renderColumnQuestions(
+            [
+                {
+                label: "a)",
+                mainHtml: `
+                \\(
+                \\begin{aligned}[t]
+                    \\frac{3x+4}{2} &\\;=\\;7 \\\\
+                    \\color{#1f7ed0}{\\times 2} &\\phantom{\\color{#1f7ed0}{\\;=\\;}} \\color{#1f7ed0}{\\times 2} \\\\
+                    \\color{#1f7ed0}{3x+4} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{14} \\\\
+                    \\color{#1f7ed0}{-4} &\\phantom{\\color{#1f7ed0}{\\;=\\;}} \\color{#1f7ed0}{-4} \\\\
+                    \\color{#1f7ed0}{3x} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{10} \\\\
+                    \\color{#1f7ed0}{\\div 3} &\\phantom{\\color{#1f7ed0}{\\;=\\;}} \\color{#1f7ed0}{\\div 3} \\\\
+                    \\color{#1f7ed0}{x} &\\color{#1f7ed0}{\\;=\\;} \\color{#1f7ed0}{\\frac{10}{3}}
+                \\end{aligned}
+                \\)
+                `
+                }
+            ],
+            { forceCount: 1, columns: 1 }
+            )}
+        `
+        },
+
+        {
+        timer: null,
+        render: () => `
+            <section class="card example-card">
+            <h1>Examples</h1>
+            <p>Make t the subject.</p>
+            </section>
+
+            ${renderColumnQuestions(
+            [
+                { label: "a)", mainHtml: `\\(\\frac{5t-1}{3}=6\\)` },
+                { label: "b)", mainHtml: `\\(y=m+ct\\)` },
+            ],
+            { forceCount: 4, columns: 2 }
+            )}
+        `
+        },
+
+        {
+        timer: { min: 1, sec: 0 },
+        render: () => `
+            <section class="card example-card">
+            <h1>Question</h1>
+            <p><strong>On your whiteboards, make \\(x\\) the subject.</strong></p>
+            </section>
+
+            ${renderMiniWhiteboard([
+            { label: "a)", exprHtml: `\\(\\frac{4x+5}{2}=11\\)` },
+            { label: "b)", exprHtml: `\\(y=3x+7\\)` },
+            { label: "c)", exprHtml: `\\(\\frac{7x-3}{5}=8\\)` },
+            { label: "d)", exprHtml: `\\(p=6x-4\\)` }
+            ])}
+        `
+        },
+
+      {
+        timer: { min: 20, sec: 0 },
+        render: () => `
+        <div class="review-title">📝 Core Knowledge Review - Write in your books:</div>
+
+        <!-- MIDDLE BOX 1: 4 worked examples (black), shown with operation lines on both sides -->
+        <div class="review-box">
+        <strong>Changing the subject - with one operation</strong><br>
+        Change the subject by applying the same operation to both sides.
+
+        <div style="
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            text-align: center;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 18px;
+            font-weight: 700;
+        ">
+
+            <!-- Example 1 -->
+            <div>
+            Example 1
+            <div style="margin-top:6px;">
+                \\(
+                \\begin{aligned}
+                a+2 &\\;=\\; b \\\\
+                \\phantom{a+}-2 &\\phantom{\\;=\\;} -2 \\\\
+                a &\\;=\\; b-2
+                \\end{aligned}
+                \\)
+            </div>
+            </div>
+
+            <!-- Example 2 -->
+            <div>
+            Example 2
+            <div style="margin-top:6px;">
+                \\(
+                \\begin{aligned}
+                a-4 &\\;=\\; b \\\\
+                \\phantom{a-}+4 &\\phantom{\\;=\\;} +4 \\\\
+                a &\\;=\\; b+4
+                \\end{aligned}
+                \\)
+            </div>
+            </div>
+
+            <!-- Example 3 -->
+            <div>
+            Example 3
+            <div style="margin-top:6px;">
+                \\(
+                \\begin{aligned}
+                3a &\\;=\\; b \\\\
+                \\frac{3a}{3} &\\;=\\; \\frac{b}{3} \\\\
+                a &\\;=\\; \\frac{b}{3}
+                \\end{aligned}
+                \\)
+            </div>
+            </div>
+
+            <!-- Example 4 -->
+            <div>
+            Example 4
+            <div style="margin-top:6px;">
+                \\(
+                \\begin{aligned}
+                \\frac{a}{5} &\\;=\\; b \\\\
+                \\phantom{\\frac{a}{}}\\times 5 &\\phantom{\\;=\\;} \\times 5 \\\\
+                a &\\;=\\; 5b
+                \\end{aligned}
+                \\)
+            </div>
+            </div>
+
+        </div>
+        </div>
+
+
+        <!-- MIDDLE BOX 2: new Core Knowledge paragraph + worked example (black) -->
+        <div class="review-box">
+        <strong>Changing the Subject - with many operations</strong><br>
+        When changing the subject of an equation, undo the operations in reverse order.
+        Start with the operation furthest away from the variable and treat anything in
+        brackets or a fraction as one whole expression. Work step by step until the
+        variable is on its own.
+
+        <div class="review-example" style="margin-top:10px; font-size:22px;">
+            \\(
+            \\begin{aligned}
+            \\frac{3x+4}{2} &\\;=\\; 7 \\\\
+            \\phantom{\\frac{3x+4}{}}\\times 2 &\\phantom{\\;=\\;} \\times 2 \\\\
+            3x+4 &\\;=\\; 14 \\\\
+            \\phantom{3x+} -4 &\\phantom{\\;=\\;} -4 \\\\
+            3x &\\;=\\; 10 \\\\
+            \\frac{3x}{3} &\\;=\\; \\frac{10}{3} \\\\
+            x &\\;=\\; \\frac{10}{3}
+            \\end{aligned}
+            \\)
+        </div>
+        </div>
+
+        <div class="apply-task">
+        <h2>Independent Apply Task</h2>
+        <p>Complete all questions on the worksheet showing all working out.</p>
+        </div>
+        `
+      }
+    ];
+
+    /* ============================================================
+      SLIDE NAVIGATION STATE
+      ------------------------------------------------------------
+      - currentSlide is the index into `slides`.
+      - maxSlide is computed so navigation stays correct if slides change.
+    ============================================================ */
+    const maxSlide = slides.length - 1;
+    let currentSlide = 0;
+
+    /* Builds the "Slide 1, Slide 2, ..." dropdown options. */
+    function buildDropdown() {
+      slideSelect.innerHTML = "";
+      slides.forEach((_, i) => {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = `Slide ${i + 1}`;
+        slideSelect.appendChild(opt);
+      });
+    }
+    buildDropdown();
+
+    /* Keeps nav buttons and UI labels consistent with currentSlide. */
+    function updateNavUI() {
+      prevBtn.classList.toggle('disabled', currentSlide === 0);
+      nextBtn.classList.toggle('disabled', currentSlide === maxSlide);
+      pageInfo.textContent = `Slide ${currentSlide + 1} of ${maxSlide + 1}`;
+      slideSelect.value = String(currentSlide);
+    }
+
+    /**
+     * Renders the current slide into #slideMount.
+     * Also:
+     * - shows/hides + resets timer based on slide.timer
+     * - triggers MathJax re-typeset
+     * - resizes canvas and restores per-slide drawing
+     */
+    function renderSlide() {
+      const t = slides[currentSlide].timer;
+      if (t) {
+        timerWidget.classList.remove('hidden');
+        setTimerTo(t.min, t.sec);
+      } else {
+        timerWidget.classList.add('hidden');
+        pauseTimer();
+      }
+
+      slideMount.innerHTML = slides[currentSlide].render();
+      if (window.MathJax?.typesetPromise) MathJax.typesetPromise();
+      updateNavUI();
+      resizeCanvas();
+      restoreDrawingForSlide(currentSlide);
+    }
+
+    /**
+     * Safe slide change:
+     * - saves drawing for the current slide
+     * - clamps target
+     * - renders target slide
+     */
+    function changeSlideTo(target) {
+      if (target < 0 || target > maxSlide) return;
+      saveCurrentSlideDrawing();
+      currentSlide = target;
+      renderSlide();
+    }
+
+    /* Click + dropdown navigation */
+    prevBtn.addEventListener('click', () => changeSlideTo(currentSlide - 1));
+    nextBtn.addEventListener('click', () => changeSlideTo(currentSlide + 1));
+    slideSelect.addEventListener('change', (e) => changeSlideTo(parseInt(e.target.value, 10) || 0));
+
+    /* Keyboard navigation */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlideTo(currentSlide - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); changeSlideTo(currentSlide + 1); }
+    });
+
+    /* ============================================================
+      DRAWING SYSTEM (PER-SLIDE WHITEBOARD INK)
+      ------------------------------------------------------------
+      Behavior:
+      - Drawing is on a canvas over `.content`
+      - Each slide index stores a PNG dataURL in `slideDrawings[index]`
+      - When you return to a slide, its drawing is restored
+
+      Template knobs:
+      - Pen colors, sizes, eraser sizes
+      - Button wiring and active state CSS
+
+      Avoid changing:
+      - The save/restore flow (called from renderSlide/changeSlideTo).
+    ============================================================ */
+    const canvas = document.getElementById('drawCanvas');
+    const contentEl = document.querySelector('.content');
+    const ctx = canvas.getContext('2d');
+
+    const penBtn = document.getElementById('penBtn');
+    const greenBtn = document.getElementById('greenBtn');
+    const redBtn = document.getElementById('redBtn');
+    const eraserBtn = document.getElementById('eraserBtn');
+
+    const penSizeBtn = document.getElementById('penSizeBtn');
+    const eraserSizeBtn = document.getElementById('eraserSizeBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    let drawingEnabled = false;
+    let isDrawing = false;
+    let currentTool = 'pen';
+    let currentColor = '#111111';
+
+    const slideDrawings = new Array(slides.length).fill(null);
+
+    const penSizes = [
+      { label: 'Small', value: 2 },
+      { label: 'Medium', value: 4 },
+      { label: 'Large', value: 8 }
+    ];
+    const eraserSizes = [
+      { label: 'Small', value: 10 },
+      { label: 'Medium', value: 20 },
+      { label: 'Large', value: 40 }
+    ];
+    let penSizeIndex = 1;
+    let eraserSizeIndex = 1;
+
+    function currentPenSize() { return penSizes[penSizeIndex].value; }
+    function currentEraserSize() { return eraserSizes[eraserSizeIndex].value; }
+
+    function updateSizeLabels() {
+      penSizeBtn.textContent = `Pen size: ${penSizes[penSizeIndex].label} ▾`;
+      eraserSizeBtn.textContent = `Eraser size: ${eraserSizes[eraserSizeIndex].label} ▾`;
+    }
+    updateSizeLabels();
+
+    function enableDrawing(enable) {
+      drawingEnabled = enable;
+      canvas.style.pointerEvents = enable ? 'auto' : 'none';
+    }
+
+    function setActiveToolButton(btn) {
+      [penBtn, greenBtn, redBtn, eraserBtn].forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    /* Tool selection: sets tool + color and enables drawing */
+    penBtn.addEventListener('click', () => {
+      currentTool = 'pen';
+      currentColor = '#111111';
+      enableDrawing(true);
+      setActiveToolButton(penBtn);
+    });
+
+    greenBtn.addEventListener('click', () => {
+      currentTool = 'pen';
+      currentColor = '#2ecc71';
+      enableDrawing(true);
+      setActiveToolButton(greenBtn);
+    });
+
+    redBtn.addEventListener('click', () => {
+      currentTool = 'pen';
+      currentColor = '#e74c3c';
+      enableDrawing(true);
+      setActiveToolButton(redBtn);
+    });
+
+    eraserBtn.addEventListener('click', () => {
+      currentTool = 'eraser';
+      enableDrawing(true);
+      setActiveToolButton(eraserBtn);
+    });
+
+    /* Size cycling: each click advances to the next preset size */
+    penSizeBtn.addEventListener('click', () => {
+      penSizeIndex = (penSizeIndex + 1) % penSizes.length;
+      updateSizeLabels();
+    });
+
+    eraserSizeBtn.addEventListener('click', () => {
+      eraserSizeIndex = (eraserSizeIndex + 1) % eraserSizes.length;
+      updateSizeLabels();
+    });
+
+    /* Clear wipes the canvas AND clears the saved snapshot for this slide. */
+    clearBtn.addEventListener('click', () => {
+      clearCanvas();
+      slideDrawings[currentSlide] = null;
+    });
+
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    function saveCurrentSlideDrawing() {
+      slideDrawings[currentSlide] = canvas.toDataURL('image/png');
+    }
+
+    function restoreDrawingForSlide(index) {
+      ctx.globalCompositeOperation = 'source-over';
+      clearCanvas();
+      const dataUrl = slideDrawings[index];
+      if (!dataUrl) return;
+      const img = new Image();
+      img.onload = () => {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+      img.src = dataUrl;
+    }
+
+    /* Canvas must match the `.content` size so drawings align with slide elements. */
+    function resizeCanvas() {
+      const rect = contentEl.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      restoreDrawingForSlide(currentSlide);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    /* Mouse drawing flow */
+    function startDraw(x, y) {
+      if (!drawingEnabled) return;
+      isDrawing = true;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+
+    function drawLine(x, y) {
+      if (!isDrawing) return;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = currentEraserSize();
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = currentPenSize();
+      }
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+
+    function stopDraw() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      ctx.closePath();
+      saveCurrentSlideDrawing();
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      startDraw(e.clientX - rect.left, e.clientY - rect.top);
+    });
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      drawLine(e.clientX - rect.left, e.clientY - rect.top);
+    });
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+
+    /* Touch drawing flow (mobile/tablet) */
+    canvas.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      startDraw(touch.clientX - rect.left, touch.clientY - rect.top);
+      e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      drawLine(touch.clientX - rect.left, touch.clientY - rect.top);
+      e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', stopDraw);
+    canvas.addEventListener('touchcancel', stopDraw);
+
+    /* ============================================================
+      TIMER SYSTEM (USED BY MINI-WHITEBOARD + CHALLENGE SLIDES)
+      ------------------------------------------------------------
+      Behavior:
+      - Slide sets initial time via setTimerTo(min, sec) in renderSlide()
+      - Start:
+          - Uses inputs if timer is at 0 OR still at its initial set value
+          - Otherwise continues counting down from the current remaining time
+      - Pause stops the interval
+      - Reset restores to the last "set" time
+
+      Template knobs:
+      - Default timer length per slide via slide.timer
+      - Timer styling in CSS
+
+      Avoid changing (unless intentional):
+      - The "shouldUseInputs" behavior (it defines when input changes apply).
+    ============================================================ */
+    let timerInterval = null;
+    let timerRemainingSeconds = 60;
+    let timerSetSeconds = 60;
+
+    function clamp(num, min, max) { return Math.min(max, Math.max(min, num)); }
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function renderTimer() {
+      const m = Math.floor(timerRemainingSeconds / 60);
+      const s = timerRemainingSeconds % 60;
+      timerDisplay.textContent = `${pad2(m)}:${pad2(s)}`;
+    }
+
+    function readInputsAsSeconds() {
+      const min = clamp(parseInt(timerMinInput.value, 10) || 0, 0, 999);
+      const sec = clamp(parseInt(timerSecInput.value, 10) || 0, 0, 59);
+      timerMinInput.value = String(min);
+      timerSecInput.value = String(sec);
+      return (min * 60) + sec;
+    }
+
+    function stopTimerInterval() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function startTimer() {
+      const inputSeconds = readInputsAsSeconds();
+      const shouldUseInputs =
+        timerRemainingSeconds === 0 ||
+        timerRemainingSeconds === timerSetSeconds;
+
+      if (shouldUseInputs) {
+        timerSetSeconds = inputSeconds || 0;
+        timerRemainingSeconds = timerSetSeconds;
+      }
+
+      stopTimerInterval();
+      timerInterval = setInterval(() => {
+        if (timerRemainingSeconds > 0) {
+          timerRemainingSeconds -= 1;
+          renderTimer();
+        } else {
+          stopTimerInterval();
+        }
+      }, 1000);
+
+      renderTimer();
+    }
+
+    function pauseTimer() { stopTimerInterval(); }
+
+    function resetTimer() {
+      stopTimerInterval();
+      timerRemainingSeconds = timerSetSeconds;
+      timerMinInput.value = String(Math.floor(timerSetSeconds / 60));
+      timerSecInput.value = String(timerSetSeconds % 60);
+      renderTimer();
+    }
+
+    function setTimerTo(min, sec) {
+      stopTimerInterval();
+      min = clamp(parseInt(min, 10) || 0, 0, 999);
+      sec = clamp(parseInt(sec, 10) || 0, 0, 59);
+
+      timerMinInput.value = String(min);
+      timerSecInput.value = String(sec);
+
+      timerSetSeconds = (min * 60) + sec;
+      timerRemainingSeconds = timerSetSeconds;
+      renderTimer();
+    }
+
+    timerStartBtn.addEventListener('click', startTimer);
+    timerPauseBtn.addEventListener('click', pauseTimer);
+    timerResetBtn.addEventListener('click', resetTimer);
+
+    function onInputsChanged() {
+      const secs = readInputsAsSeconds();
+      timerSetSeconds = secs;
+      if (!timerInterval) {
+        timerRemainingSeconds = timerSetSeconds;
+        renderTimer();
+      }
+    }
+    timerMinInput.addEventListener('input', onInputsChanged);
+    timerSecInput.addEventListener('input', onInputsChanged);
+    timerMinInput.addEventListener('change', onInputsChanged);
+    timerSecInput.addEventListener('change', onInputsChanged);
+
+    renderTimer();
+
+    /* ============================================================
+      DRAGGABLE TIMER + SAVED POSITION (localStorage)
+      ------------------------------------------------------------
+      Behavior:
+      - Timer can be dragged (except when clicking inputs/buttons).
+      - Last position is stored in localStorage so it stays where you put it.
+
+      Template knobs:
+      - Change TIMER_POS_KEY if you want independent storage per lesson/version.
+
+      Avoid changing:
+      - Drag math assumes `.content` is the bounding box.
+    ============================================================ */
+    const TIMER_POS_KEY = 'timerWidgetPosition_v3';
+
+    function loadTimerPosition() {
+      try {
+        const raw = localStorage.getItem(TIMER_POS_KEY);
+        if (!raw) return;
+        const pos = JSON.parse(raw);
+        if (typeof pos?.left !== 'number' || typeof pos?.top !== 'number') return;
+        timerWidget.style.left = `${pos.left}px`;
+        timerWidget.style.top = `${pos.top}px`;
+      } catch {}
+    }
+
+    function saveTimerPosition(left, top) {
+      localStorage.setItem(TIMER_POS_KEY, JSON.stringify({ left, top }));
+    }
+
+    function makeDraggableAbsolute(el, onSave) {
+      let dragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      el.addEventListener('mousedown', (e) => {
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'button') return;
+
+        dragging = true;
+        const rect = el.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        e.preventDefault();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const parentRect = contentEl.getBoundingClientRect();
+
+        let left = e.clientX - parentRect.left - offsetX;
+        let top = e.clientY - parentRect.top - offsetY;
+
+        left = clamp(left, 0, parentRect.width - el.offsetWidth);
+        top = clamp(top, 0, parentRect.height - el.offsetHeight);
+
+        el.style.left = `${left}px`;
+        el.style.top = `${top}px`;
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        const left = parseFloat(el.style.left) || 0;
+        const top = parseFloat(el.style.top) || 0;
+        if (onSave) onSave(left, top);
+      });
+    }
+
+    loadTimerPosition();
+    makeDraggableAbsolute(timerWidget, saveTimerPosition);
+
+    /* ============================================================
+      INIT (BOOTSTRAP)
+      ------------------------------------------------------------
+      - Renders slide 0 (Slide 1)
+      - Sets up timer position/dragging
+      - Ensures canvas sizing is correct via renderSlide() -> resizeCanvas()
+    ============================================================ */
+    renderSlide();
+  </script>
+</body>
+</html>
