@@ -991,7 +991,7 @@
             [
               {
                 label: "a)",
-                mainHtml: `\\(2a+7\\)`,
+                mainHtml: `\\(2a+7 = 3\\)`,
                 subs: [
                   `\\(\\text{variable is } a\\)`,
                   `\\(\\times 2 \\text{ is closest to } a\\)`,
@@ -1015,11 +1015,11 @@
             <p>Identify the operation furthest away from \\(a\\).</p>
           </section>
 
-          ${renderRowQuestions(
+          ${renderColumnQuestions(
             [
-              { label: "a)", mainHtml: `\\(3a+5\\)` },
+              { label: "a)", mainHtml: `\\(3a+5=b\\)` },
               { label: "", mainHtml: "", subs: [], placeholder: true },
-              { label: "b)", mainHtml: `\\(7+4a\\)` },
+              { label: "b)", mainHtml: `\\frac{3x+4}{2} = 7\\` },
               { label: "", mainHtml: "", subs: [], placeholder: true }
             ],
             { forceCount: 4 }
@@ -1036,10 +1036,10 @@
           </section>
 
           ${renderMiniWhiteboard([
-            { label: "1.", exprHtml: `\\(5a+9\\)` },
-            { label: "2.", exprHtml: `\\(12-3a\\)` },
-            { label: "3.", exprHtml: `\\(4a-7\\)` },
-            { label: "4.", exprHtml: `\\(6+2a\\)` }
+            { label: "a)", exprHtml: `\\(5a+9 = 7\\)` },
+            { label: "b)", exprHtml: `\\(12-3a = y\\)` },
+            { label: "c)", exprHtml: `\\frac{4a-7}{8}=b\\)` },
+            { label: "d)", exprHtml: `\\frac{6+2a}{5}=b\\)` }
           ])}
         `
       },
