@@ -967,6 +967,93 @@
         `
       },
 
+            {
+        timer: null,
+        render: () => `
+          <section class="card">
+            <h1>Core Knowledge: Identifying the Operation Furthest Away from the Variable</h1>
+
+            <p>When isolating a variable:</p>
+            <ul class="bullets">
+              <li>First, identify the variable you want to isolate.</li>
+              <li>Look at the operations connected to the variable.</li>
+              <li>The operation furthest away from the variable is the one removed first.</li>
+              <li>This helps decide which inverse operation to apply.</li>
+            </ul>
+
+            <p><b>Worked Example (Model Thinking):</b></p>
+
+            <p>Consider the expression:</p>
+            <p>\\(2a+7\\)</p>
+
+            <p>The variable is \\(a\\).</p>
+
+            <p>The multiplication by 2 is closest to \\(a\\).</p>
+
+            <p>The addition of 7 is furthest away from \\(a\\).</p>
+
+            <p>Therefore, the operation furthest away from \\(a\\) is \\(+7\\).</p>
+          </section>
+
+          <section class="card example-card">
+            <h1>Example</h1>
+            <p>Identify the operation furthest away from \\(a\\).</p>
+          </section>
+
+          ${renderRowQuestions(
+            [
+              {
+                label: "a)",
+                mainHtml: `\\(2a+7\\)`,
+                subs: [
+                  `\\(\\text{furthest operation is } +7\\)`
+                ]
+              },
+              { label: "", mainHtml: "", subs: [], placeholder: true }
+            ],
+            { forceCount: 2 }
+          )}
+        `
+      },
+
+      {
+        timer: null,
+        render: () => `
+          <section class="card example-card">
+            <h1>Examples</h1>
+            <p>Identify the operation furthest away from \\(a\\).</p>
+          </section>
+
+          ${renderRowQuestions(
+            [
+              { label: "a)", mainHtml: `\\(3a+5\\)` },
+              { label: "", mainHtml: "", subs: [], placeholder: true },
+              { label: "b)", mainHtml: `\\(7+4a\\)` },
+              { label: "", mainHtml: "", subs: [], placeholder: true }
+            ],
+            { forceCount: 4 }
+          )}
+        `
+      },
+
+      {
+        timer: { min: 1, sec: 0 },
+        render: () => `
+          <section class="card example-card">
+            <h1>Question 5</h1>
+            <p><strong>On your whiteboards, identify the operation furthest away from \\(a\\). Do not rearrange or solve.</strong></p>
+          </section>
+
+          ${renderMiniWhiteboard([
+            { label: "1.", exprHtml: `\\(5a+9\\)` },
+            { label: "2.", exprHtml: `\\(12-3a\\)` },
+            { label: "3.", exprHtml: `\\(4a-7\\)` },
+            { label: "4.", exprHtml: `\\(6+2a\\)` }
+          ])}
+        `
+      },
+
+
       {
         timer: null,
         render: () => `
