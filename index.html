@@ -851,7 +851,7 @@
         render: () => `
           <section class="card example-card">
             <h1>Examples</h1>
-            <p>Make the stated variable the subject.</p>
+            <p>Make a the subject.</p>
           </section>
 
           ${renderColumnQuestions(
@@ -937,7 +937,7 @@
         render: () => `
           <section class="card example-card">
             <h1>Examples</h1>
-            <p>Make the stated variable the subject.</p>
+            <p>Make a the subject.</p>
           </section>
 
           ${renderColumnQuestions(
@@ -1006,8 +1006,7 @@
         `
       },
 
-
-      {
+           {
         timer: null,
         render: () => `
           <section class="card example-card">
@@ -1017,9 +1016,9 @@
 
           ${renderColumnQuestions(
             [
-              { label: "a)", mainHtml: `\\(3a+5=b\\)` },
+              { label: "a)", mainHtml: `\\(3a+5\\)` },
               { label: "", mainHtml: "", subs: [], placeholder: true },
-              { label: "b)", mainHtml: `\\frac{3x+4}{2} = 7\\` },
+              { label: "b)", mainHtml: `\\(\\frac{3x+4}{2}\\)` },
               { label: "", mainHtml: "", subs: [], placeholder: true }
             ],
             { forceCount: 4 }
@@ -1036,14 +1035,13 @@
           </section>
 
           ${renderMiniWhiteboard([
-            { label: "a)", exprHtml: `\\(5a+9 = 7\\)` },
-            { label: "b)", exprHtml: `\\(12-3a = y\\)` },
-            { label: "c)", exprHtml: `\\frac{4a-7}{8}=b\\)` },
-            { label: "d)", exprHtml: `\\frac{6+2a}{5}=b\\)` }
+            { label: "a)", exprHtml: `\\(5a+9\\)` },
+            { label: "b)", exprHtml: `\\(12-3a\\)` },
+            { label: "c)", exprHtml: `\\(\\frac{4a-7}{8}\\)` },
+            { label: "d)", exprHtml: `\\(\\frac{6+2a}{5}\\)` }
           ])}
         `
       },
-
 
       {
         timer: null,
