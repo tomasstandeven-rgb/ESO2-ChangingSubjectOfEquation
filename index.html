@@ -967,7 +967,7 @@
         `
       },
 
-            {
+      {
         timer: null,
         render: () => `
           <section class="card">
@@ -980,19 +980,6 @@
               <li>The operation furthest away from the variable is the one removed first.</li>
               <li>This helps decide which inverse operation to apply.</li>
             </ul>
-
-            <p><b>Worked Example (Model Thinking):</b></p>
-
-            <p>Consider the expression:</p>
-            <p>\\(2a+7\\)</p>
-
-            <p>The variable is \\(a\\).</p>
-
-            <p>The multiplication by 2 is closest to \\(a\\).</p>
-
-            <p>The addition of 7 is furthest away from \\(a\\).</p>
-
-            <p>Therefore, the operation furthest away from \\(a\\) is \\(+7\\).</p>
           </section>
 
           <section class="card example-card">
@@ -1006,6 +993,9 @@
                 label: "a)",
                 mainHtml: `\\(2a+7\\)`,
                 subs: [
+                  `\\(\\text{variable is } a\\)`,
+                  `\\(\\times 2 \\text{ is closest to } a\\)`,
+                  `\\(+7 \\text{ is furthest from } a\\)`,
                   `\\(\\text{furthest operation is } +7\\)`
                 ]
               },
@@ -1015,6 +1005,7 @@
           )}
         `
       },
+
 
       {
         timer: null,
